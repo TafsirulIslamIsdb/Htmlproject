@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+     <head>
+          <meta charset="UTF-8" />
+          <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+          <meta
+               name="viewport"
+               content="width=device-width, initial-scale=1.0"
+          />
+          <title>Chat app</title>
+          <link rel="stylesheet" href="./styles/style.css" />
+          <script src="./node_modules/jquery/dist/jquery.js"></script>
+          <script src="./node_modules/socket.io/client-dist/socket.io.js"></script>
+          <script src="./node_modules/socketio-file-upload/client.js"></script>
+          <script>
+               var dname = "";
+               $(() => {
+                    var socket = io.connect("http://localhost:8400");
+                    socket.on("connect", () => {
+                         console.log("connected");
+                    });
+                    var siofu = new SocketIOFileUpload(socket);
+                    siofu.listenOnInput(document.getElementById("uploadfile"));
+                    siofu.listenOnDrop(document.getElementById("drop"));
+                    socket.on("connected", (msg) => {
+                         $("#connect").show();
+                    });
+                    socket.on("updateusers", (userlist) => {
+                         $("#chatzone").show();
+                         $("#connect").hide();
+                         console.log(userlist);
+                         $("#users").empty();
+                         userlist.forEach((u) => {
+                              $("#users").append(
+                                   `<li class="list-item">${u}</li>`
+                              );
+                         });
+                    });
+                    socket.on("message", (data) => {
+                         console.log(data);
+                         $("#msgs").append(
+                              `<li class="list-item">From ${data.f}: ${data.m}</li>`
+                         );
+                    });
+					socket.on("uploaded", (data) => {
+                         console.log(data.length);
+                         var name ='...' + data.substring(data.length-10);
+                         console.log(name);
+                         $("#files").append(`<div class='box'>
+                          <img src='/Uploads/icon.png' width='100' />
+                          <span>${name}</span>
+                          <span><a href='/Uploads/${data}' target='_blank'>Download</a></span>
+                          </div>`)
+                        
+                    });
+                    $("#join").click(() => {
+                         socket.emit("addme", $("#dname").val());
+                         dname = $("#dname").val();
+                    });
+                    $("#send").click(() => {
+                         if ($("#m").val() != "")
+                              socket.emit("send", {
+                                   f: dname,
+                                   m: $("#m").val(),
+                              });
+                         $("#m").val("");
+                    });
+                    $("#upload").click(() => {
+                         $("#uploadfile").trigger("click");
+                    });
+                    siofu.addEventListener("complete", function (event) {
+                         //console.log(event.success);
+                         //console.log(event.file);
+                         $("#files").append(`<div class='box'>
+                          <img src='/Uploads/icon.png' width='100' />
+                          <span>${event.file.name}</span>
+                          <span><a href='/Uploads/${event.file.name}' target='_blank'>Download</a></span>
+                          </div>`)
+                    });
+               });
+          </script>
+     </head>
+     <body>
+          <nav class="navbar">
+               <ul class="menu">
+                    <li class="menu-item always">
+                         <a href="./index.html" class="nav-link brand"
+                              >Let's Chat</a
+                         >
+                    </li>
+                    <li class="menu-item">
+                         <a href="./index.html" class="nav-link">Home</a>
+                    </li>
+                    <li class="menu-item">
+                         <a href="./chat.html" class="nav-link">Chat</a>
+                    </li>
+               </ul>
+          </nav>
+          <div class="container">
+               <div id="connect" style="display: none">
+                    
+                    <div class="col-1" style="margin:0 auto;margin-top:150px;">
+                         <div class="input-addon">
+                           <input
+                             type="text"
+                             class="input-addon-field"
+                             id="dname"
+                             placeholder="Enter your name"
+                           />
+                           <button class="input-addon-item" id="join">Join</button>
+                         </div>
+                       </div>
+                       <div class="col-2">&nbsp;</div>
+               </div>
+               <div id="chatzone" style="display: none">
+                    
+               <div class="container">
+
+                    <div class="chat-box">
+                         <div class="user-list-box">
+                              <div class="card">
+                                   <div class="card-header" style="border-bottom: 1px solid #987f7f59;padding: 10px;">User List</div>
+                                   <div class="card-body">
+                <ul id="users" class="list"></ul>
+                                   </div>
+                              </div>
+                         </div>
+                         <div class="message-box">
+                              <div class="card">
+                                   <div class="card-body" >
+                                        <div class="msg-history">
+                                             <ul id="msgs" class="list">
+               
+                                             </ul>
+                                        </div>
+                                        <div class="input-btn-box">
+                                             <input
+                                             type="text"
+                                                  id="m"
+                                                  
+                                             />
+                            
+                                             <button
+                                                  id="send"
+                                                  class="btn-danger"
+                                                  
+                                             >
+                                                  Send
+                                             </button>
+                                             <button
+                                                  id="upload"
+                                                  class="btn-primary"
+                                                 
+                                             >
+                                                  Upload
+                                             </button>
+                                        </div>
+                                        <div class="drop" id="drop">
+                                             <p style="text-align: center;padding-top:30px">     Drop files here</p>
+                                        
+                                        </div>
+               
+                                        <div class="drop" id="files">
+                                             <p style="text-align: center;padding-top:30px">     File shared</p>
+                                            
+                                        </div>
+               
+                                        <!-- <div class="file-shared">
+                                             <h3>Files shared</h3>
+                                             <div class="files" id="files">
+                                        </div> -->
+               
+               
+               
+               
+               
+                                   </div>
+                              </div>
+                    
+                         </div>
+                    </div>
+               </div>
+               
+
+
+
+
+
+          </div>
+          <input type="file" id="uploadfile" style="display: none" />
+
+
+
+
+
+
+
+
+
+     </body>
+</html>
